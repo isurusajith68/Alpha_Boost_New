@@ -1,26 +1,27 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import { Audio } from "expo-av";
-import * as FileSystem from "expo-file-system";
+import * as DocumentPicker from "expo-document-picker";
+import * as FileSystem from "expo-file-system/legacy";
+import React, { useEffect, useState } from "react";
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 type RecorderProps = {
   label?: string;
   onRecorded: (info: { uri: string; durationMs: number }) => void;
 };
 
-// ✅ Custom recording options (required by new Expo SDKs)
+// ✅ Custom recording options for WAV format (uncompressed, high quality)
 const RECORDING_OPTIONS_HIGH_QUALITY: Audio.RecordingOptions = {
   android: {
-    extension: ".m4a",
-    outputFormat: Audio.AndroidOutputFormat.MPEG_4,
-    audioEncoder: Audio.AndroidAudioEncoder.AAC,
+    extension: ".wav",
+    outputFormat: Audio.AndroidOutputFormat.DEFAULT,
+    audioEncoder: Audio.AndroidAudioEncoder.DEFAULT,
     sampleRate: 44100,
     numberOfChannels: 2,
     bitRate: 128000,
   },
   ios: {
-    extension: ".m4a",
-    audioQuality: Audio.IOSAudioQuality.HIGH,
+    extension: ".wav",
+    audioQuality: Audio.IOSAudioQuality.MAX,
     sampleRate: 44100,
     numberOfChannels: 2,
     bitRate: 128000,
@@ -29,8 +30,8 @@ const RECORDING_OPTIONS_HIGH_QUALITY: Audio.RecordingOptions = {
     linearPCMIsFloat: false,
   },
   web: {
-    mimeType: "audio/webm",
-    bitsPerSecond: 128000,
+    mimeType: "audio/wav",
+    bitsPerSecond: 1411200, // Higher bitrate for WAV
   },
 };
 
@@ -51,34 +52,56 @@ export default function Recorder({ label, onRecorded }: RecorderProps) {
     })();
 
     return () => {
-      sound?.unloadAsync();
+      if (sound) {
+        sound.unloadAsync();
+      }
     };
-  }, []);
+  }, [sound]);
 
   async function startRecording() {
     try {
+      console.log("Starting recording...");
+      setStatusText("Requesting permissions...");
+      const permission = await Audio.requestPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert(
+          "Permission Denied",
+          "Microphone permission is required for recording."
+        );
+        return;
+      }
+
       setStatusText("Preparing...");
       const rec = new Audio.Recording();
       await rec.prepareToRecordAsync(RECORDING_OPTIONS_HIGH_QUALITY);
       await rec.startAsync();
       setRecording(rec);
       setStatusText("Recording...");
+      console.log("Recording started successfully");
     } catch (err) {
-      console.error(err);
-      Alert.alert("Error", "Could not start recording.");
+      console.error("Recording start error:", err);
+      setStatusText("Recording failed");
+      Alert.alert("Error", "Could not start recording. Please try again.");
     }
   }
 
   async function stopRecording() {
     try {
-      if (!recording) return;
+      console.log("Stopping recording...");
+      if (!recording) {
+        console.log("No recording to stop");
+        return;
+      }
       await recording.stopAndUnloadAsync();
       const uri = recording.getURI();
+      console.log("Recording URI:", uri);
 
       if (!uri) return;
       const destDir = `${FileSystem.documentDirectory}recordings/`;
-      await FileSystem.makeDirectoryAsync(destDir, { intermediates: true }).catch(() => {});
-      const destPath = destDir + `rec_${Date.now()}.m4a`;
+      await FileSystem.makeDirectoryAsync(destDir, {
+        intermediates: true,
+      }).catch(() => {});
+      const destPath = destDir + `rec_${Date.now()}.wav`;
 
       await FileSystem.copyAsync({ from: uri, to: destPath });
       setLastUri(destPath);
@@ -89,9 +112,56 @@ export default function Recorder({ label, onRecorded }: RecorderProps) {
       onRecorded({ uri: destPath, durationMs: duration });
       setStatusText("Recording saved");
       setRecording(null);
+      console.log("Recording stopped and saved");
     } catch (err) {
-      console.error(err);
+      console.error("Recording stop error:", err);
+      setStatusText("Recording failed");
       Alert.alert("Error", "Could not stop recording.");
+    }
+  }
+
+  async function pickAudioFile() {
+    try {
+      setStatusText("Selecting file...");
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ["audio/*"], // Accept all audio types
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled) {
+        setStatusText("");
+        return;
+      }
+
+      const file = result.assets[0];
+      if (!file) {
+        setStatusText("No file selected");
+        return;
+      }
+
+      console.log("Selected file:", file.name, file.uri);
+
+      // Copy file to app directory for consistent handling
+      const destDir = `${FileSystem.documentDirectory}recordings/`;
+      await FileSystem.makeDirectoryAsync(destDir, {
+        intermediates: true,
+      }).catch(() => {});
+      const destPath = destDir + `upload_${Date.now()}_${file.name}`;
+
+      await FileSystem.copyAsync({ from: file.uri, to: destPath });
+      setLastUri(destPath);
+
+      // Get file info to estimate duration (rough estimate)
+      const fileSize = file.size || 0;
+      const estimatedDuration = Math.max(1000, fileSize * 0.1); // Rough estimate: 0.1ms per byte
+
+      onRecorded({ uri: destPath, durationMs: estimatedDuration });
+      setStatusText("File uploaded successfully");
+      console.log("File uploaded and saved");
+    } catch (err) {
+      console.error("File pick error:", err);
+      setStatusText("Upload failed");
+      Alert.alert("Error", "Could not upload file. Please try again.");
     }
   }
 
@@ -122,22 +192,43 @@ export default function Recorder({ label, onRecorded }: RecorderProps) {
     }
   }
 
+  const handlePress = () => {
+    console.log("Button pressed, recording state:", !!recording);
+    if (recording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  };
+
   return (
     <View style={styles.box}>
       <Text style={{ fontSize: 16, marginBottom: 8 }}>
         {label ?? "Recorder"}
       </Text>
-      <View style={{ flexDirection: "row", gap: 12 }}>
+      <View
+        style={{
+          flexDirection: "row",
+          gap: 12,
+          flexWrap: "wrap",
+          justifyContent: "center",
+        }}
+      >
         <TouchableOpacity
-          onPress={recording ? stopRecording : startRecording}
+          onPress={handlePress}
           style={[
             styles.actionBtn,
             { backgroundColor: recording ? "#ef4444" : "#10b981" },
           ]}
         >
-          <Text style={styles.actionText}>
-            {recording ? "Stop" : "Record"}
-          </Text>
+          <Text style={styles.actionText}>{recording ? "Stop" : "Record"}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={pickAudioFile}
+          style={[styles.actionBtn, { backgroundColor: "#8b5cf6" }]}
+        >
+          <Text style={styles.actionText}>Upload</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -147,9 +238,7 @@ export default function Recorder({ label, onRecorded }: RecorderProps) {
             { backgroundColor: lastUri ? "#3b82f6" : "#ccc" },
           ]}
         >
-          <Text style={styles.actionText}>
-            {isPlaying ? "Stop" : "Play"}
-          </Text>
+          <Text style={styles.actionText}>{isPlaying ? "Stop" : "Play"}</Text>
         </TouchableOpacity>
       </View>
       <Text style={{ marginTop: 8 }}>{statusText}</Text>
