@@ -22,16 +22,16 @@ export default function HomeScreen() {
 
       <View style={styles.container}>
         <Text style={styles.title}>English Fun Learning</Text>
-        <Text style={styles.subtitle}>Improve Your Spoken</Text>
+        <Text style={styles.subtitle}>Improve Your Spoken English</Text>
 
         <View style={styles.grid}>
           {/* home */}
           <TouchableOpacity
             style={styles.card}
-            onPress={() => router.push("/game")}
+            onPress={() => router.push("/home")}
           >
             <Text style={styles.cardEmoji}>📖</Text>
-            <Text style={styles.cardText}>Learn Words</Text>
+            <Text style={styles.cardText}>Learn Activity</Text>
           </TouchableOpacity>
 
           {/* Record */}
