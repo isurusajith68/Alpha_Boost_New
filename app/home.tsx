@@ -59,7 +59,7 @@ export default function Home() {
 
       if (response.ok || response.status === 405) {
         // 405 is expected since OPTIONS might not be fully implemented, but it means server is responding
-        Alert.alert("✅ Server Connected", "Server is running and reachable!");
+        Alert.alert("Server Connected", "Server is running and reachable!");
       } else {
         Alert.alert(
           "❌ Server Error",
@@ -156,12 +156,27 @@ export default function Home() {
         Alert.alert("Pronunciation Analysis Complete!", resultsMessage);
       } else {
         setSessionComplete(true);
-        Alert.alert(
-          "Session Complete",
-          `All recordings saved locally. Server prediction failed: ${
-            result.results[0]?.error || "Unknown error"
-          }`
-        );
+        const errorMsg = result.results[0]?.error || "Unknown error";
+
+        let userFriendlyMessage = "All recordings saved locally.";
+
+        if (errorMsg === "No predictions could be made") {
+          userFriendlyMessage +=
+            "\n\nThe server could not analyze your recordings. This might be due to:\n• Audio quality issues\n• Unsupported file format\n• Server processing error\n\nPlease try recording again with better audio quality.";
+        } else if (
+          errorMsg.includes("timeout") ||
+          errorMsg.includes("timed out")
+        ) {
+          userFriendlyMessage +=
+            "\n\nThe server took too long to process your recordings. Please try again.";
+        } else if (errorMsg.includes("format") || errorMsg.includes("codec")) {
+          userFriendlyMessage +=
+            "\n\nThere was an issue with the audio format. Please ensure you're using a supported format (WAV recommended).";
+        } else {
+          userFriendlyMessage += `\n\nServer prediction failed: ${errorMsg}`;
+        }
+
+        Alert.alert("Session Complete", userFriendlyMessage);
       }
     } catch (error) {
       console.error("Bulk upload error:", error);
