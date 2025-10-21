@@ -9,9 +9,19 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import AuthGuard from "../components/AuthGuard";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { userProfile, logout } = useAuth();
+
+  const handleLogout = () => {
+    Alert.alert("Logout", "Are you sure you want to logout?", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Logout", onPress: () => logout() },
+    ]);
+  };
 
   const cardData = [
     {
@@ -70,60 +80,75 @@ export default function HomeScreen() {
     }
   }
   return (
-    <ImageBackground
-      source={require("../assets/green.png")}
-      style={styles.background}
-      resizeMode="cover"
-    >
-      <View style={styles.overlay} />
+    <AuthGuard>
+      <ImageBackground
+        source={require("../assets/green.png")}
+        style={styles.background}
+        resizeMode="cover"
+      >
+        <View style={styles.overlay} />
 
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>🌟 English Fun Learning 🌟</Text>
-          <Text style={styles.subtitle}>Let&apos;s Learn & Play Together!</Text>
-          <View style={styles.decorativeLine} />
-        </View>
+        <View style={styles.container}>
+          <View style={styles.header}>
+            <Text style={styles.title}>🌟 English Fun Learning 🌟</Text>
+            {userProfile && (
+              <Text style={styles.userGreeting}>
+                Welcome back, {userProfile.firstName}! 👋
+              </Text>
+            )}
+            <Text style={styles.subtitle}>
+              Let&apos;s Learn & Play Together!
+            </Text>
+            <View style={styles.decorativeLine} />
+          </View>
 
-        <View style={styles.grid}>
-          {cardData.map((card, index) => (
-            <TouchableOpacity
-              key={index}
-              style={[
-                styles.card,
-                {
-                  backgroundColor: card.colors[0],
-                  shadowColor: card.shadowColor,
-                },
-              ]}
-              onPress={() => router.push(card.route)}
-              activeOpacity={0.8}
-            >
-              <View style={styles.cardContent}>
-                <View style={styles.emojiContainer}>
-                  <Text style={styles.cardEmoji}>{card.emoji}</Text>
+          <View style={styles.grid}>
+            {cardData.map((card, index) => (
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.card,
+                  {
+                    backgroundColor: card.colors[0],
+                    shadowColor: card.shadowColor,
+                  },
+                ]}
+                onPress={() => router.push(card.route)}
+                activeOpacity={0.8}
+              >
+                <View style={styles.cardContent}>
+                  <View style={styles.emojiContainer}>
+                    <Text style={styles.cardEmoji}>{card.emoji}</Text>
+                  </View>
+                  <Text style={styles.cardText}>{card.text}</Text>
                 </View>
-                <Text style={styles.cardText}>{card.text}</Text>
-              </View>
 
-              <Text style={styles.sparkle1}>✨</Text>
-              <Text style={styles.sparkle2}>⭐</Text>
+                <Text style={styles.sparkle1}>✨</Text>
+                <Text style={styles.sparkle2}>⭐</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>
+              Ready to have fun? Pick an activity! 🎉
+            </Text>
+            <TouchableOpacity
+              style={styles.logoutButton}
+              onPress={handleLogout}
+            >
+              <Text style={styles.logoutButtonText}>Logout 🚪</Text>
             </TouchableOpacity>
-          ))}
+          </View>
+          <TouchableOpacity
+            style={styles.btnSecondary}
+            onPress={testServerConnection}
+          >
+            <Text style={styles.btnSecondaryText}>Server Connection</Text>
+          </TouchableOpacity>
         </View>
-
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            Ready to have fun? Pick an activity! 🎉
-          </Text>
-        </View>
-        <TouchableOpacity
-          style={styles.btnSecondary}
-          onPress={testServerConnection}
-        >
-          <Text style={styles.btnSecondaryText}>Server Connection</Text>
-        </TouchableOpacity>
-      </View>
-    </ImageBackground>
+      </ImageBackground>
+    </AuthGuard>
   );
 }
 
@@ -163,6 +188,16 @@ const styles = StyleSheet.create({
     color: "#fff",
     marginBottom: 15,
     textAlign: "center",
+    textShadowColor: "rgba(0,0,0,0.3)",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+  },
+  userGreeting: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#FFE66D",
+    textAlign: "center",
+    marginBottom: 8,
     textShadowColor: "rgba(0,0,0,0.3)",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
@@ -248,6 +283,21 @@ const styles = StyleSheet.create({
     textShadowColor: "rgba(0,0,0,0.3)",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
+  },
+  logoutButton: {
+    marginTop: 15,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.3)",
+  },
+  logoutButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+    textAlign: "center",
   },
   btnSecondary: {
     marginTop: 10,

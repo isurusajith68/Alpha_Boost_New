@@ -1,4 +1,3 @@
-import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   Alert,
@@ -9,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import AuthGuard from "../components/AuthGuard";
 import Recorder from "../components/Recorder";
 import WordCard from "../components/WordCard";
 import { addHistoryEntry, HistoryEntry } from "../utils/storage";
@@ -22,7 +22,6 @@ const WORDS = [
 ];
 
 export default function Home() {
-  const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [recordingCount, setRecordingCount] = useState<{
     [key: number]: number;
@@ -225,68 +224,72 @@ export default function Home() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.headerSection}>
-          <Text style={styles.header}>🎯 Word Practice Time! 🎯</Text>
-          <Text style={styles.subHeader}>
-            Say the word clearly and I&apos;ll listen!
-          </Text>
-          <Text style={styles.progressIndicator}>
-            Word {currentIndex + 1} of {WORDS.length}
-          </Text>
-        </View>
-
-        <View style={styles.card}>
-          <WordCard word={current.word} image={current.image} />
-          <Text style={styles.recordingProgress}>
-            Recording {currentRecordingCount + 1} of {requiredRecordings}
-          </Text>
-          <Recorder
-            label={`Say "${current.word}"`}
-            onRecorded={onSubmitRecording}
-          />
-        </View>
-
-        {isUploading && (
-          <View style={styles.uploadingBox}>
-            <Text style={styles.uploadingText}>📤 Uploading Recordings...</Text>
-            <Text style={styles.uploadingSubtext}>
-              Sending {allRecordings.length} recordings to server
+    <AuthGuard>
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView contentContainerStyle={styles.container}>
+          <View style={styles.headerSection}>
+            <Text style={styles.header}>🎯 Word Practice Time! 🎯</Text>
+            <Text style={styles.subHeader}>
+              Say the word clearly and I&apos;ll listen!
+            </Text>
+            <Text style={styles.progressIndicator}>
+              Word {currentIndex + 1} of {WORDS.length}
             </Text>
           </View>
-        )}
 
-        {sessionComplete ? (
-          <View style={styles.completionBox}>
-            <Text style={styles.completionText}>🎉 Session Complete!</Text>
+          <View style={styles.card}>
+            <WordCard word={current.word} image={current.image} />
+            <Text style={styles.recordingProgress}>
+              Recording {currentRecordingCount + 1} of {requiredRecordings}
+            </Text>
+            <Recorder
+              label={`Say "${current.word}"`}
+              onRecorded={onSubmitRecording}
+            />
           </View>
-        ) : (
-          <>
-            <TouchableOpacity
-              style={[
-                styles.btnPrimary,
-                currentRecordingCount < requiredRecordings &&
-                  styles.btnDisabled,
-              ]}
-              onPress={
-                currentRecordingCount >= requiredRecordings
-                  ? nextWord
-                  : undefined
-              }
-            >
-              <Text style={styles.btnPrimaryText}>
-                {currentIndex === WORDS.length - 1
-                  ? "Finish Session"
-                  : "Next Word"}
-              </Text>
-            </TouchableOpacity>
-          </>
-        )}
 
-        <View style={{ height: 20 }} />
-      </ScrollView>
-    </SafeAreaView>
+          {isUploading && (
+            <View style={styles.uploadingBox}>
+              <Text style={styles.uploadingText}>
+                📤 Uploading Recordings...
+              </Text>
+              <Text style={styles.uploadingSubtext}>
+                Sending {allRecordings.length} recordings to server
+              </Text>
+            </View>
+          )}
+
+          {sessionComplete ? (
+            <View style={styles.completionBox}>
+              <Text style={styles.completionText}>🎉 Session Complete!</Text>
+            </View>
+          ) : (
+            <>
+              <TouchableOpacity
+                style={[
+                  styles.btnPrimary,
+                  currentRecordingCount < requiredRecordings &&
+                    styles.btnDisabled,
+                ]}
+                onPress={
+                  currentRecordingCount >= requiredRecordings
+                    ? nextWord
+                    : undefined
+                }
+              >
+                <Text style={styles.btnPrimaryText}>
+                  {currentIndex === WORDS.length - 1
+                    ? "Finish Session"
+                    : "Next Word"}
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
+
+          <View style={{ height: 20 }} />
+        </ScrollView>
+      </SafeAreaView>
+    </AuthGuard>
   );
 }
 

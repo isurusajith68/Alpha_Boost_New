@@ -1,4 +1,11 @@
-import { Audio } from "expo-av";
+import {
+  RecordingPresets,
+  requestRecordingPermissionsAsync,
+  setAudioModeAsync,
+  useAudioPlayer,
+  useAudioRecorder,
+  useAudioRecorderState,
+} from "expo-audio";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
 import React, { useEffect, useState } from "react";
@@ -9,60 +16,38 @@ type RecorderProps = {
   onRecorded: (info: { uri: string; durationMs: number }) => void;
 };
 
-// ✅ Custom recording options for WAV format (uncompressed, high quality)
-const RECORDING_OPTIONS_HIGH_QUALITY: Audio.RecordingOptions = {
-  android: {
-    extension: ".wav",
-    outputFormat: Audio.AndroidOutputFormat.DEFAULT,
-    audioEncoder: Audio.AndroidAudioEncoder.DEFAULT,
-    sampleRate: 44100,
-    numberOfChannels: 2,
-    bitRate: 128000,
-  },
-  ios: {
-    extension: ".wav",
-    audioQuality: Audio.IOSAudioQuality.MAX,
-    sampleRate: 44100,
-    numberOfChannels: 2,
-    bitRate: 128000,
-    linearPCMBitDepth: 16,
-    linearPCMIsBigEndian: false,
-    linearPCMIsFloat: false,
-  },
-  web: {
-    mimeType: "audio/wav",
-    bitsPerSecond: 1411200, // Higher bitrate for WAV
-  },
-};
-
 export default function Recorder({ label, onRecorded }: RecorderProps) {
-  const [recording, setRecording] = useState<Audio.Recording | null>(null);
-  const [isPlaying, setPlaying] = useState(false);
-  const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [lastUri, setLastUri] = useState<string | null>(null);
   const [statusText, setStatusText] = useState<string>("");
 
+  // Create recorder with high quality preset
+  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY, (status) => {
+    console.log("Recording status:", status);
+    if (status.isFinished) {
+      setStatusText("Recording saved");
+    }
+  });
+
+  // Get recorder state
+  const recorderState = useAudioRecorderState(recorder);
+
+  // Create player for playback
+  const player = useAudioPlayer(lastUri);
+
   useEffect(() => {
     (async () => {
-      await Audio.requestPermissionsAsync();
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
+      await setAudioModeAsync({
+        allowsRecording: true,
+        playsInSilentMode: true,
       });
     })();
-
-    return () => {
-      if (sound) {
-        sound.unloadAsync();
-      }
-    };
-  }, [sound]);
+  }, []);
 
   async function startRecording() {
     try {
       console.log("Starting recording...");
       setStatusText("Requesting permissions...");
-      const permission = await Audio.requestPermissionsAsync();
+      const permission = await requestRecordingPermissionsAsync();
       if (!permission.granted) {
         Alert.alert(
           "Permission Denied",
@@ -72,10 +57,8 @@ export default function Recorder({ label, onRecorded }: RecorderProps) {
       }
 
       setStatusText("Preparing...");
-      const rec = new Audio.Recording();
-      await rec.prepareToRecordAsync(RECORDING_OPTIONS_HIGH_QUALITY);
-      await rec.startAsync();
-      setRecording(rec);
+      await recorder.prepareToRecordAsync();
+      recorder.record();
       setStatusText("Recording...");
       console.log("Recording started successfully");
     } catch (err) {
@@ -88,12 +71,13 @@ export default function Recorder({ label, onRecorded }: RecorderProps) {
   async function stopRecording() {
     try {
       console.log("Stopping recording...");
-      if (!recording) {
+      if (!recorderState.isRecording) {
         console.log("No recording to stop");
         return;
       }
-      await recording.stopAndUnloadAsync();
-      const uri = recording.getURI();
+
+      recorder.stop();
+      const uri = recorder.uri;
       console.log("Recording URI:", uri);
 
       if (!uri) return;
@@ -106,12 +90,10 @@ export default function Recorder({ label, onRecorded }: RecorderProps) {
       await FileSystem.copyAsync({ from: uri, to: destPath });
       setLastUri(destPath);
 
-      const status = await recording.getStatusAsync();
-      const duration = status.durationMillis ?? 0;
+      const duration = recorderState.durationMillis;
 
       onRecorded({ uri: destPath, durationMs: duration });
       setStatusText("Recording saved");
-      setRecording(null);
       console.log("Recording stopped and saved");
     } catch (err) {
       console.error("Recording stop error:", err);
@@ -168,24 +150,11 @@ export default function Recorder({ label, onRecorded }: RecorderProps) {
   async function playLast() {
     try {
       if (!lastUri) return;
-      if (sound) {
-        await sound.unloadAsync();
-        setSound(null);
-        setPlaying(false);
-        return;
+      if (player.playing) {
+        player.pause();
+      } else {
+        player.play();
       }
-      const { sound: s } = await Audio.Sound.createAsync({ uri: lastUri });
-      setSound(s);
-      setPlaying(true);
-      s.setOnPlaybackStatusUpdate((st) => {
-        if (!st.isLoaded) return;
-        if (st.didJustFinish) {
-          setPlaying(false);
-          s.unloadAsync().catch(() => {});
-          setSound(null);
-        }
-      });
-      await s.playAsync();
     } catch (err) {
       console.error(err);
       Alert.alert("Error", "Could not play audio.");
@@ -193,8 +162,8 @@ export default function Recorder({ label, onRecorded }: RecorderProps) {
   }
 
   const handlePress = () => {
-    console.log("Button pressed, recording state:", !!recording);
-    if (recording) {
+    console.log("Button pressed, recording state:", recorderState.isRecording);
+    if (recorderState.isRecording) {
       stopRecording();
     } else {
       startRecording();
@@ -211,13 +180,19 @@ export default function Recorder({ label, onRecorded }: RecorderProps) {
           style={[
             styles.actionBtn,
             styles.recordBtn,
-            { backgroundColor: recording ? "#FF6B9D" : "#4ECDC4" },
+            {
+              backgroundColor: recorderState.isRecording
+                ? "#FF6B9D"
+                : "#4ECDC4",
+            },
           ]}
           activeOpacity={0.8}
         >
-          <Text style={styles.btnEmoji}>{recording ? "⏹️" : "🎤"}</Text>
+          <Text style={styles.btnEmoji}>
+            {recorderState.isRecording ? "⏹️" : "🎤"}
+          </Text>
           <Text style={styles.actionText}>
-            {recording ? "Stop Recording" : "Start Recording"}
+            {recorderState.isRecording ? "Stop Recording" : "Start Recording"}
           </Text>
         </TouchableOpacity>
 
@@ -242,9 +217,9 @@ export default function Recorder({ label, onRecorded }: RecorderProps) {
             disabled={!lastUri}
             activeOpacity={0.8}
           >
-            <Text style={styles.btnEmoji}>{isPlaying ? "⏸️" : "▶️"}</Text>
+            <Text style={styles.btnEmoji}>{player.playing ? "⏸️" : "▶️"}</Text>
             <Text style={styles.secondaryText}>
-              {isPlaying ? "Stop" : "Play Back"}
+              {player.playing ? "Stop" : "Play Back"}
             </Text>
           </TouchableOpacity>
         </View>

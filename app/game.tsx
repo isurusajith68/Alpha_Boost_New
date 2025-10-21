@@ -1,11 +1,14 @@
 import React from "react";
 import { Text, View } from "react-native";
+import AuthGuard from "../components/AuthGuard";
 
 const Game = () => {
   return (
-    <View>
-      <Text>Game Screen</Text>
-    </View>
+    <AuthGuard>
+      <View>
+        <Text>Game Screen</Text>
+      </View>
+    </AuthGuard>
   );
 };
 

@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import AuthGuard from "../components/AuthGuard";
 import { getHistory, HistoryEntry } from "../utils/storage";
 
 export default function Feedback() {
@@ -64,88 +65,94 @@ export default function Feedback() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.headerSection}>
-          <Text style={styles.title}>🎉 Your Progress! 🎉</Text>
-          <Text style={styles.subtitle}>
-            Look how much you&apos;ve learned!
-          </Text>
-        </View>
-
-        <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>{totalWords}</Text>
-            <Text style={styles.statLabel}>Words Tried</Text>
-            <Text style={styles.statEmoji}>📝</Text>
-          </View>
-
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>{correctWords}</Text>
-            <Text style={styles.statLabel}>Correct Answers</Text>
-            <Text style={styles.statEmoji}>✅</Text>
-          </View>
-
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>{practiceCount}</Text>
-            <Text style={styles.statLabel}>Voice Practice</Text>
-            <Text style={styles.statEmoji}>🎤</Text>
-          </View>
-        </View>
-
-        <View style={styles.achievementCard}>
-          <Text style={styles.achievementTitle}>Your Achievement</Text>
-          <View style={styles.starContainer}>{renderStars()}</View>
-          <Text style={styles.successRate}>{successRate}% Success Rate!</Text>
-          <Text style={styles.encouragement}>{getEncouragementMessage()}</Text>
-        </View>
-
-        {totalWords === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyEmoji}>🚀</Text>
-            <Text style={styles.emptyTitle}>Start Your Learning Journey!</Text>
-            <Text style={styles.emptyText}>
-              Practice some words and play games to see your progress here!
+    <AuthGuard>
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView contentContainerStyle={styles.container}>
+          <View style={styles.headerSection}>
+            <Text style={styles.title}>🎉 Your Progress! 🎉</Text>
+            <Text style={styles.subtitle}>
+              Look how much you&apos;ve learned!
             </Text>
           </View>
-        ) : (
-          <View style={styles.recentActivity}>
-            <Text style={styles.recentTitle}>Recent Activity</Text>
-            {history.slice(0, 5).map((entry, index) => (
-              <View key={entry.id} style={styles.activityItem}>
-                <Text style={styles.activityWord}>{entry.word}</Text>
-                <Text style={styles.activityScore}>
-                  {entry.score && entry.score > 0
-                    ? "✅"
-                    : entry.audioUri
-                    ? "🎤"
-                    : "❌"}
-                </Text>
-                <Text style={styles.activityTime}>
-                  {new Date(entry.timestamp).toLocaleDateString()}
-                </Text>
-              </View>
-            ))}
+
+          <View style={styles.statsContainer}>
+            <View style={styles.statCard}>
+              <Text style={styles.statNumber}>{totalWords}</Text>
+              <Text style={styles.statLabel}>Words Tried</Text>
+              <Text style={styles.statEmoji}>📝</Text>
+            </View>
+
+            <View style={styles.statCard}>
+              <Text style={styles.statNumber}>{correctWords}</Text>
+              <Text style={styles.statLabel}>Correct Answers</Text>
+              <Text style={styles.statEmoji}>✅</Text>
+            </View>
+
+            <View style={styles.statCard}>
+              <Text style={styles.statNumber}>{practiceCount}</Text>
+              <Text style={styles.statLabel}>Voice Practice</Text>
+              <Text style={styles.statEmoji}>🎤</Text>
+            </View>
           </View>
-        )}
 
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.primaryButton}
-            onPress={() => router.push("/home")}
-          >
-            <Text style={styles.buttonText}>Practice More Words! 📚</Text>
-          </TouchableOpacity>
+          <View style={styles.achievementCard}>
+            <Text style={styles.achievementTitle}>Your Achievement</Text>
+            <View style={styles.starContainer}>{renderStars()}</View>
+            <Text style={styles.successRate}>{successRate}% Success Rate!</Text>
+            <Text style={styles.encouragement}>
+              {getEncouragementMessage()}
+            </Text>
+          </View>
 
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={() => router.push("/game")}
-          >
-            <Text style={styles.buttonText}>Play Games! 🎮</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+          {totalWords === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyEmoji}>🚀</Text>
+              <Text style={styles.emptyTitle}>
+                Start Your Learning Journey!
+              </Text>
+              <Text style={styles.emptyText}>
+                Practice some words and play games to see your progress here!
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.recentActivity}>
+              <Text style={styles.recentTitle}>Recent Activity</Text>
+              {history.slice(0, 5).map((entry, index) => (
+                <View key={entry.id} style={styles.activityItem}>
+                  <Text style={styles.activityWord}>{entry.word}</Text>
+                  <Text style={styles.activityScore}>
+                    {entry.score && entry.score > 0
+                      ? "✅"
+                      : entry.audioUri
+                      ? "🎤"
+                      : "❌"}
+                  </Text>
+                  <Text style={styles.activityTime}>
+                    {new Date(entry.timestamp).toLocaleDateString()}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
+
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={() => router.push("/home")}
+            >
+              <Text style={styles.buttonText}>Practice More Words! 📚</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={() => router.push("/game")}
+            >
+              <Text style={styles.buttonText}>Play Games! 🎮</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </AuthGuard>
   );
 }
 

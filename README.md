@@ -1,50 +1,169 @@
-# Welcome to your Expo app 👋
+# English Fun Learning App 🌟
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A child-friendly English learning app built with React Native and Expo, featuring Firebase authentication and cartoon avatars!
 
-## Get started
+## Features
 
-1. Install dependencies
+- 🎨 **Child-Friendly Design**: Vibrant colors, playful animations, and cartoon avatars
+- 🔐 **Firebase Authentication**: Secure login and registration system
+- 👤 **Profile Management**: Customizable profiles with cartoon avatars
+- 📚 **Learning Activities**: Interactive English learning content
+- 🎮 **Games**: Fun educational games for children
+- 📊 **Progress Tracking**: Monitor learning progress and achievements
+
+## Firebase Setup
+
+### 1. Create a Firebase Project
+
+1. Go to [Firebase Console](https://console.firebase.google.com/)
+2. Click "Create a project" or "Add project"
+3. Enter your project name (e.g., "english-fun-learning")
+4. Enable Google Analytics if desired
+5. Choose your Google Analytics account
+6. Click "Create project"
+
+### 2. Enable Authentication
+
+1. In your Firebase project, go to "Authentication" in the left sidebar
+2. Click on the "Get started" button
+3. Go to the "Sign-in method" tab
+4. Enable "Email/Password" sign-in method
+5. Click "Save"
+
+### 3. Enable Firestore Database
+
+1. In your Firebase project, go to "Firestore Database" in the left sidebar
+2. Click "Create database"
+3. Choose "Start in test mode" for development
+4. Select a location for your database
+5. Click "Done"
+
+### 4. Get Firebase Configuration
+
+1. In your Firebase project, click the gear icon → "Project settings"
+2. Scroll down to "Your apps" section
+3. Click "Add app" → Web app (</>)
+4. Enter an app nickname
+5. Copy the Firebase configuration object
+
+### 5. Update Firebase Config
+
+1. Open `config/firebase.ts`
+2. Replace the placeholder values with your actual Firebase config:
+
+```typescript
+const firebaseConfig = {
+  apiKey: "your-actual-api-key",
+  authDomain: "your-project.firebaseapp.com",
+  projectId: "your-actual-project-id",
+  storageBucket: "your-project.appspot.com",
+  messagingSenderId: "your-actual-sender-id",
+  appId: "your-actual-app-id",
+};
+```
+
+## Installation & Setup
+
+1. **Install dependencies**
 
    ```bash
    npm install
    ```
 
-2. Start the app
+2. **Configure Firebase** (see Firebase Setup section above)
 
+3. **Start the development server**
    ```bash
-   npx expo start
+   npm start
    ```
 
-In the output, you'll find options to open the app in a
+## App Structure
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+```
+app/
+├── _layout.tsx          # Root layout with authentication
+├── index.tsx            # Home screen (authenticated users)
+├── login.tsx            # Login screen
+├── register.tsx         # Registration screen
+├── profile.tsx          # User profile screen
+├── home.tsx             # Learning activities
+├── game.tsx             # Games
+├── feedback.tsx         # Progress feedback
+└── modal.tsx            # Modal screens
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+components/
+├── ChildFriendlyButton.tsx    # Reusable button component
+├── FunActivityCard.tsx        # Activity card component
+└── AlternativeHome.tsx        # Alternative home layout
 
-## Get a fresh project
+contexts/
+└── AuthContext.tsx            # Authentication context
 
-When you're ready, run:
+config/
+└── firebase.ts                # Firebase configuration
 
-```bash
-npm run reset-project
+constants/
+├── theme.ts                   # App theme and colors
+└── cartoonImages.ts           # Cartoon avatar options
+
+utils/
+└── animations.ts              # Child-friendly animations
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Features Overview
 
-## Learn more
+### Authentication
 
-To learn more about developing your project with Expo, look at the following resources:
+- **Login Screen**: Email/password authentication
+- **Registration Screen**: Complete user registration with:
+  - First name & last name
+  - Email address
+  - Phone number
+  - Password confirmation
+  - Cartoon avatar selection
+- **Profile Management**: View and manage user profile
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### Child-Friendly Design
 
-## Join the community
+- Vibrant color palette suitable for children
+- Large, touch-friendly buttons
+- Cartoon avatars and emojis
+- Playful animations and transitions
+- Rounded corners and soft shadows
 
-Join our community of developers creating universal apps.
+### Learning Features
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- Interactive learning activities
+- Educational games
+- Progress tracking
+- Achievement system
+
+## Development
+
+### Available Scripts
+
+- `npm start` - Start the Expo development server
+- `npm run android` - Run on Android emulator/device
+- `npm run ios` - Run on iOS simulator
+- `npm run web` - Run in web browser
+- `npm run reset-project` - Reset to a fresh project state
+
+### Code Style
+
+This project uses ESLint for code linting. Run `npm run lint` to check for issues.
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License.
+
+## Support
+
+For questions or issues, please open an issue on GitHub or contact the development team.
