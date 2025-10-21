@@ -203,45 +203,58 @@ export default function Recorder({ label, onRecorded }: RecorderProps) {
 
   return (
     <View style={styles.box}>
-      <Text style={{ fontSize: 16, marginBottom: 8 }}>
-        {label ?? "Recorder"}
-      </Text>
-      <View
-        style={{
-          flexDirection: "row",
-          gap: 12,
-          flexWrap: "wrap",
-          justifyContent: "center",
-        }}
-      >
+      <Text style={styles.title}>{label ?? "🎤 Voice Recorder"}</Text>
+
+      <View style={styles.buttonContainer}>
         <TouchableOpacity
           onPress={handlePress}
           style={[
             styles.actionBtn,
-            { backgroundColor: recording ? "#ef4444" : "#10b981" },
+            styles.recordBtn,
+            { backgroundColor: recording ? "#FF6B9D" : "#4ECDC4" },
           ]}
+          activeOpacity={0.8}
         >
-          <Text style={styles.actionText}>{recording ? "Stop" : "Record"}</Text>
+          <Text style={styles.btnEmoji}>{recording ? "⏹️" : "🎤"}</Text>
+          <Text style={styles.actionText}>
+            {recording ? "Stop Recording" : "Start Recording"}
+          </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={pickAudioFile}
-          style={[styles.actionBtn, { backgroundColor: "#8b5cf6" }]}
-        >
-          <Text style={styles.actionText}>Upload</Text>
-        </TouchableOpacity>
+        <View style={styles.secondaryButtonsRow}>
+          <TouchableOpacity
+            onPress={pickAudioFile}
+            style={[styles.actionBtn, styles.secondaryBtn, styles.uploadBtn]}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.btnEmoji}>📁</Text>
+            <Text style={styles.secondaryText}>Upload File</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={playLast}
-          style={[
-            styles.actionBtn,
-            { backgroundColor: lastUri ? "#3b82f6" : "#ccc" },
-          ]}
-        >
-          <Text style={styles.actionText}>{isPlaying ? "Stop" : "Play"}</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            onPress={playLast}
+            style={[
+              styles.actionBtn,
+              styles.secondaryBtn,
+              styles.playBtn,
+              { opacity: lastUri ? 1 : 0.5 },
+            ]}
+            disabled={!lastUri}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.btnEmoji}>{isPlaying ? "⏸️" : "▶️"}</Text>
+            <Text style={styles.secondaryText}>
+              {isPlaying ? "Stop" : "Play Back"}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
-      <Text style={{ marginTop: 8 }}>{statusText}</Text>
+
+      {statusText && (
+        <View style={styles.statusContainer}>
+          <Text style={styles.statusText}>{statusText}</Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -250,18 +263,90 @@ const styles = StyleSheet.create({
   box: {
     width: "100%",
     backgroundColor: "#fff",
-    padding: 14,
-    borderRadius: 12,
+    padding: 20,
+    borderRadius: 25,
     alignItems: "center",
-    elevation: 2,
+    elevation: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    borderWidth: 3,
+    borderColor: "#FFE66D",
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#1F2937",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  buttonContainer: {
+    width: "100%",
+    alignItems: "center",
+    gap: 15,
   },
   actionBtn: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 10,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    alignItems: "center",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  recordBtn: {
+    width: "100%",
+    minHeight: 80,
+    justifyContent: "center",
+  },
+  secondaryButtonsRow: {
+    flexDirection: "row",
+    width: "100%",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  secondaryBtn: {
+    flex: 1,
+    minHeight: 70,
+    justifyContent: "center",
+  },
+  uploadBtn: {
+    backgroundColor: "#8B5CF6",
+    shadowColor: "#8B5CF6",
+  },
+  playBtn: {
+    backgroundColor: "#3B82F6",
+    shadowColor: "#3B82F6",
+  },
+  btnEmoji: {
+    fontSize: 24,
+    marginBottom: 4,
   },
   actionText: {
     color: "#fff",
+    fontWeight: "800",
+    fontSize: 16,
+    textAlign: "center",
+  },
+  secondaryText: {
+    color: "#fff",
     fontWeight: "700",
+    fontSize: 14,
+    textAlign: "center",
+  },
+  statusContainer: {
+    marginTop: 15,
+    backgroundColor: "#F3F4F6",
+    padding: 12,
+    borderRadius: 15,
+    width: "100%",
+  },
+  statusText: {
+    fontSize: 14,
+    color: "#374151",
+    textAlign: "center",
+    fontWeight: "600",
   },
 });

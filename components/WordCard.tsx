@@ -1,36 +1,69 @@
 import React from "react";
-import { View, Text, Image, StyleSheet } from "react-native";
+import { Image, StyleSheet, Text, View } from "react-native";
 
-export default function WordCard({ word, image }: { word: string; image: any }) {
+export default function WordCard({
+  word,
+  image,
+}: {
+  word: string;
+  image: any;
+}) {
   return (
     <View style={styles.card}>
-      <Image source={image} style={styles.image} resizeMode="contain" />
-      <Text style={styles.word}>{word}</Text>
+      <View style={styles.imageContainer}>
+        <Image source={image} style={styles.image} resizeMode="contain" />
+      </View>
+      <View style={styles.wordContainer}>
+        <Text style={styles.word}>{word}</Text>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    width: 300,
-    height: 300,
+    width: 320,
+    height: 320,
     backgroundColor: "#fff",
-    borderRadius: 12,
+    borderRadius: 25,
     alignItems: "center",
     justifyContent: "center",
-    elevation: 3,
+    elevation: 8,
     shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    marginBottom: 12,
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    marginBottom: 15,
+    borderWidth: 4,
+    borderColor: "#4ECDC4", // Teal border
+    padding: 20,
+  },
+  imageContainer: {
+    width: 200,
+    height: 200,
+    backgroundColor: "#F0F8FF", // Light background for image
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 15,
+    borderWidth: 2,
+    borderColor: "#E5E7EB",
   },
   image: {
-    width: 160,
-    height: 160,
-    marginBottom: 8
+    width: 180,
+    height: 180,
+  },
+  wordContainer: {
+    backgroundColor: "#FFE66D", // Yellow background for word
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: "#F59E0B",
   },
   word: {
-    fontSize: 22,
-    fontWeight: "700"
-  }
+    fontSize: 28,
+    fontWeight: "900",
+    color: "#1F2937",
+    textAlign: "center",
+  },
 });

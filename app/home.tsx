@@ -27,7 +27,7 @@ export default function Home() {
   const [recordingCount, setRecordingCount] = useState<{
     [key: number]: number;
   }>({});
-  const [lastScore, setLastScore] = useState<number | null>(null);
+
   const [sessionComplete, setSessionComplete] = useState(false);
   const [allRecordings, setAllRecordings] = useState<
     { word: string; uri: string; durationMs: number }[]
@@ -41,7 +41,6 @@ export default function Home() {
   function nextWord() {
     if (currentIndex < WORDS.length - 1) {
       setCurrentIndex(currentIndex + 1);
-      setLastScore(null);
     } else {
       uploadAllRecordings();
     }
@@ -256,10 +255,15 @@ export default function Home() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.header}> Pronounce & Play</Text>
-        <Text style={styles.subHeader}>
-          Practice words, record your voice & improve pronunciation
-        </Text>
+        <View style={styles.headerSection}>
+          <Text style={styles.header}>🎯 Word Practice Time! 🎯</Text>
+          <Text style={styles.subHeader}>
+            Say the word clearly and I&apos;ll listen!
+          </Text>
+          <Text style={styles.progressIndicator}>
+            Word {currentIndex + 1} of {WORDS.length}
+          </Text>
+        </View>
 
         <View style={styles.card}>
           <WordCard word={current.word} image={current.image} />
@@ -333,72 +337,106 @@ export default function Home() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F2F6FF",
+    backgroundColor: "#F0F8FF", // Alice blue - softer background
   },
   container: {
     padding: 20,
     alignItems: "center",
   },
+  headerSection: {
+    alignItems: "center",
+    marginBottom: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
+    padding: 20,
+    borderRadius: 20,
+    width: "100%",
+  },
   header: {
-    fontSize: 30,
-    fontWeight: "800",
-    marginBottom: 6,
-    color: "#1E3A8A",
+    fontSize: 28,
+    fontWeight: "900",
+    marginBottom: 8,
+    color: "#FF6B9D", // Pink color for playfulness
+    textAlign: "center",
   },
   subHeader: {
-    fontSize: 14,
-    color: "#555",
-    marginBottom: 18,
+    fontSize: 16,
+    color: "#4B5563",
+    marginBottom: 8,
     textAlign: "center",
+    fontWeight: "600",
+  },
+  progressIndicator: {
+    fontSize: 14,
+    color: "#10B981", // Green for progress
+    fontWeight: "700",
+    backgroundColor: "#D1FAE5",
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 20,
+    overflow: "hidden",
   },
   card: {
     backgroundColor: "#fff",
-    padding: 16,
-    borderRadius: 16,
+    padding: 20,
+    borderRadius: 25,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 4,
-    marginBottom: 20,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 6,
+    marginBottom: 25,
     width: "100%",
     alignItems: "center",
+    borderWidth: 3,
+    borderColor: "#FFE66D", // Yellow border for fun
   },
   btnPrimary: {
-    backgroundColor: "#4f46e5",
-    paddingVertical: 12,
-    paddingHorizontal: 18,
-    borderRadius: 12,
-    marginTop: 10,
+    backgroundColor: "#FF6B9D", // Pink for primary action
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 25,
+    marginTop: 15,
     width: "100%",
     alignItems: "center",
+    shadowColor: "#FF6B9D",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
   },
   btnPrimaryAlt: {
-    backgroundColor: "#10b981",
-    paddingVertical: 12,
-    paddingHorizontal: 18,
-    borderRadius: 12,
-    marginTop: 10,
+    backgroundColor: "#4ECDC4", // Teal for game button
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 25,
+    marginTop: 15,
     width: "100%",
     alignItems: "center",
+    shadowColor: "#4ECDC4",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
   },
   btnSecondary: {
-    backgroundColor: "#e5e7eb",
-    paddingVertical: 12,
-    paddingHorizontal: 18,
-    borderRadius: 12,
-    marginTop: 10,
+    backgroundColor: "#F3F4F6",
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    marginTop: 12,
     width: "100%",
     alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#D1D5DB",
   },
   btnPrimaryText: {
     color: "#fff",
-    fontWeight: "700",
-    fontSize: 16,
+    fontWeight: "800",
+    fontSize: 18,
   },
   btnSecondaryText: {
-    color: "#333",
-    fontWeight: "600",
+    color: "#374151",
+    fontWeight: "700",
     fontSize: 16,
   },
   scoreBox: {
@@ -421,45 +459,53 @@ const styles = StyleSheet.create({
   },
   completionBox: {
     backgroundColor: "#D1FAE5",
-    padding: 20,
-    borderRadius: 16,
+    padding: 25,
+    borderRadius: 25,
     width: "100%",
     alignItems: "center",
     marginBottom: 20,
+    borderWidth: 3,
+    borderColor: "#10B981",
   },
   completionText: {
-    fontSize: 24,
-    fontWeight: "800",
+    fontSize: 28,
+    fontWeight: "900",
     color: "#065F46",
     marginBottom: 8,
+    textAlign: "center",
   },
   completionSubtext: {
-    fontSize: 16,
+    fontSize: 18,
     color: "#047857",
     textAlign: "center",
     marginBottom: 20,
+    fontWeight: "600",
   },
   btnDisabled: {
-    backgroundColor: "#9CA3AF",
+    backgroundColor: "#D1D5DB",
     opacity: 0.6,
   },
   uploadingBox: {
     backgroundColor: "#FEF3C7",
-    padding: 20,
-    borderRadius: 16,
+    padding: 25,
+    borderRadius: 25,
     width: "100%",
     alignItems: "center",
     marginBottom: 20,
+    borderWidth: 3,
+    borderColor: "#F59E0B",
   },
   uploadingText: {
-    fontSize: 20,
-    fontWeight: "700",
+    fontSize: 22,
+    fontWeight: "800",
     color: "#92400E",
     marginBottom: 8,
+    textAlign: "center",
   },
   uploadingSubtext: {
     fontSize: 16,
     color: "#78350F",
     textAlign: "center",
+    fontWeight: "600",
   },
 });
