@@ -103,33 +103,6 @@ export default function ProfileScreen() {
             </View>
           </View>
 
-          {/* Stats Section */}
-          <View style={styles.statsCard}>
-            <Text style={styles.statsTitle}>📊 Your Learning Stats</Text>
-
-            <View style={styles.statsGrid}>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>0</Text>
-                <Text style={styles.statLabel}>Words Learned</Text>
-              </View>
-
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>0</Text>
-                <Text style={styles.statLabel}>Games Played</Text>
-              </View>
-
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>0</Text>
-                <Text style={styles.statLabel}>Minutes Learned</Text>
-              </View>
-
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>0</Text>
-                <Text style={styles.statLabel}>Achievements</Text>
-              </View>
-            </View>
-          </View>
-
           {/* Back Button */}
           <ChildFriendlyButton
             title="Back to Home"
