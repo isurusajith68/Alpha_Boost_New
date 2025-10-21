@@ -46,34 +46,6 @@ export default function Home() {
     }
   }
 
-  async function testServerConnection() {
-    try {
-      console.log("Testing server connection...");
-      const response = await fetch(
-        "https://gzrznv7g-5000.asse.devtunnels.ms/api/predict",
-        {
-          method: "POST", // Use POST instead of HEAD since server doesn't allow HEAD
-        }
-      );
-
-      if (response.ok || response.status === 405) {
-        // 405 is expected since OPTIONS might not be fully implemented, but it means server is responding
-        Alert.alert("Server Connected", "Server is running and reachable!");
-      } else {
-        Alert.alert(
-          "❌ Server Error",
-          `Server responded with status: ${response.status}`
-        );
-      }
-    } catch (error) {
-      console.error("Server test error:", error);
-      Alert.alert(
-        "❌ Connection Failed",
-        "Cannot connect to server. Please ensure it's running on localhost:5000"
-      );
-    }
-  }
-
   async function uploadAllRecordings() {
     if (allRecordings.length === 0) {
       setSessionComplete(true);
@@ -307,22 +279,6 @@ export default function Home() {
                 {currentIndex === WORDS.length - 1
                   ? "Finish Session"
                   : "Next Word"}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.btnPrimaryAlt}
-              onPress={() => router.push("/game")}
-            >
-              <Text style={styles.btnPrimaryText}>Play Game</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.btnSecondary}
-              onPress={testServerConnection}
-            >
-              <Text style={styles.btnSecondaryText}>
-                Test Server Connection
               </Text>
             </TouchableOpacity>
           </>

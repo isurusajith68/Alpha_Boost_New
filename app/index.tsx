@@ -2,6 +2,7 @@
 import { useRouter } from "expo-router";
 import React from "react";
 import {
+  Alert,
   ImageBackground,
   StyleSheet,
   Text,
@@ -17,14 +18,14 @@ export default function HomeScreen() {
       emoji: "📖",
       text: "Learn Activity",
       route: "/home" as const,
-      colors: ["#FF6B9D", "#FF8FB3"], 
+      colors: ["#FF6B9D", "#FF8FB3"],
       shadowColor: "#FF6B9D",
     },
     {
       emoji: "👤",
       text: "Profile",
       route: "/profile" as const,
-      colors: ["#4ECDC4", "#7DDDD9"], 
+      colors: ["#4ECDC4", "#7DDDD9"],
       shadowColor: "#4ECDC4",
     },
     {
@@ -38,11 +39,36 @@ export default function HomeScreen() {
       emoji: "🎮",
       text: "Play Game",
       route: "/game" as const,
-      colors: ["#A78BFA", "#C4B5FD"], 
+      colors: ["#A78BFA", "#C4B5FD"],
       shadowColor: "#A78BFA",
     },
   ];
+  async function testServerConnection() {
+    try {
+      console.log("Testing server connection...");
+      const response = await fetch(
+        "https://gzrznv7g-5000.asse.devtunnels.ms/api/health",
+        {
+          method: "POST",
+        }
+      );
 
+      if (response.ok || response.status === 405) {
+        Alert.alert("Server Connected", "Server is running and reachable!");
+      } else {
+        Alert.alert(
+          "❌ Server Error",
+          `Server responded with status: ${response.status}`
+        );
+      }
+    } catch (error) {
+      console.error("Server test error:", error);
+      Alert.alert(
+        "❌ Connection Failed",
+        "Cannot connect to server. Please ensure it's running on localhost:5000"
+      );
+    }
+  }
   return (
     <ImageBackground
       source={require("../assets/green.png")}
@@ -90,6 +116,12 @@ export default function HomeScreen() {
             Ready to have fun? Pick an activity! 🎉
           </Text>
         </View>
+        <TouchableOpacity
+          style={styles.btnSecondary}
+          onPress={testServerConnection}
+        >
+          <Text style={styles.btnSecondaryText}>Server Connection</Text>
+        </TouchableOpacity>
       </View>
     </ImageBackground>
   );
@@ -216,5 +248,16 @@ const styles = StyleSheet.create({
     textShadowColor: "rgba(0,0,0,0.3)",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
+  },
+  btnSecondary: {
+    marginTop: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
+  },
+  btnSecondaryText: {
+    color: "#fff",
+    fontWeight: "600",
   },
 });
