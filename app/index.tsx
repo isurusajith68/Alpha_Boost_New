@@ -52,6 +52,13 @@ export default function HomeScreen() {
       colors: ["#A78BFA", "#C4B5FD"],
       shadowColor: "#A78BFA",
     },
+    {
+      emoji: "🎤",
+      text: "Pronunciation Practice",
+      route: "/pronunciation-practice" as const,
+      colors: ["#FF6B6B", "#FF8E8E"],
+      shadowColor: "#FF6B6B",
+    },
   ];
   async function testServerConnection() {
     try {
