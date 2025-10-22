@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import AuthGuard from "../components/AuthGuard";
 import { db } from "../config/firebase";
 import { useAuth } from "../contexts/AuthContext";
@@ -315,140 +316,149 @@ const Game = () => {
   if (gameFinished) {
     return (
       <AuthGuard>
-        <ScrollView style={styles.container}>
-          <View style={styles.resultContainer}>
-            {isAnalyzing ? (
-              <View style={styles.analyzingFullScreen}>
-                <ActivityIndicator size="large" color="#4ECDC4" />
-                <Text style={styles.analyzingText}>
-                  Analyzing your pronunciations...
-                </Text>
-                <Text style={styles.analyzingSubtext}>
-                  Please wait while AI processes your answers
-                </Text>
-              </View>
-            ) : (
-              <>
-                <Text style={styles.resultTitle}>🎉 Game Complete! 🎉</Text>
+        <SafeAreaView style={styles.safeArea}>
+          <ScrollView style={styles.container}>
+            <View style={styles.resultContainer}>
+              {isAnalyzing ? (
+                <View style={styles.analyzingFullScreen}>
+                  <ActivityIndicator size="large" color="#4ECDC4" />
+                  <Text style={styles.analyzingText}>
+                    Analyzing your pronunciations...
+                  </Text>
+                  <Text style={styles.analyzingSubtext}>
+                    Please wait while AI processes your answers
+                  </Text>
+                </View>
+              ) : (
+                <>
+                  <Text style={styles.resultTitle}>🎉 Game Complete! 🎉</Text>
 
-                {isSavingScore && (
-                  <View style={styles.savingContainer}>
-                    <ActivityIndicator size="small" color="#4ECDC4" />
-                    <Text style={styles.savingText}>Saving your score...</Text>
-                  </View>
-                )}
+                  {isSavingScore && (
+                    <View style={styles.savingContainer}>
+                      <ActivityIndicator size="small" color="#4ECDC4" />
+                      <Text style={styles.savingText}>
+                        Saving your score...
+                      </Text>
+                    </View>
+                  )}
 
-                <Text style={styles.resultScore}>
-                  Your Score: {score} / {WORDS.length}
-                </Text>
-                <Text style={styles.resultPercentage}>
-                  {Math.round((score / WORDS.length) * 100)}%
-                </Text>
-                {score === WORDS.length && (
-                  <Text style={styles.perfectScore}>Perfect Score! 🌟</Text>
-                )}
+                  <Text style={styles.resultScore}>
+                    Your Score: {score} / {WORDS.length}
+                  </Text>
+                  <Text style={styles.resultPercentage}>
+                    {Math.round((score / WORDS.length) * 100)}%
+                  </Text>
+                  {score === WORDS.length && (
+                    <Text style={styles.perfectScore}>Perfect Score! 🌟</Text>
+                  )}
 
-                {apiResults.length > 0 && (
-                  <View style={styles.aiAnalysisSection}>
-                    <Text style={styles.aiAnalysisTitle}>
-                      Pronunciation Analysis
-                    </Text>
-                    {apiResults.map((result, index) => (
-                      <View key={index} style={styles.aiAnalysisItem}>
-                        <Text style={styles.aiAnalysisWord}>
-                          {index + 1}. {userAnswers[index]?.word.toUpperCase()}
-                        </Text>
-                        <View style={styles.aiAnalysisDetails}>
-                          <Text
-                            style={[
-                              styles.aiAnalysisPrediction,
-                              result.prediction === "correct"
-                                ? styles.predictionCorrect
-                                : styles.predictionIncorrect,
-                            ]}
-                          >
-                            {result.prediction === "correct"
-                              ? "Correct"
-                              : "Incorrect"}
+                  {apiResults.length > 0 && (
+                    <View style={styles.aiAnalysisSection}>
+                      <Text style={styles.aiAnalysisTitle}>
+                        Pronunciation Analysis
+                      </Text>
+                      {apiResults.map((result, index) => (
+                        <View key={index} style={styles.aiAnalysisItem}>
+                          <Text style={styles.aiAnalysisWord}>
+                            {index + 1}.{" "}
+                            {userAnswers[index]?.word.toUpperCase()}
                           </Text>
-                          <Text style={styles.aiAnalysisMetric}>
-                            Confidence: {Math.round(result.confidence * 100)}%
-                          </Text>
-                          <Text style={styles.aiAnalysisMetric}>
-                            Probability:{" "}
-                            {Math.round(result.probability_correct * 100)}%
-                          </Text>
+                          <View style={styles.aiAnalysisDetails}>
+                            <Text
+                              style={[
+                                styles.aiAnalysisPrediction,
+                                result.prediction === "correct"
+                                  ? styles.predictionCorrect
+                                  : styles.predictionIncorrect,
+                              ]}
+                            >
+                              {result.prediction === "correct"
+                                ? "Correct"
+                                : "Incorrect"}
+                            </Text>
+                            <Text style={styles.aiAnalysisMetric}>
+                              Confidence: {Math.round(result.confidence * 100)}%
+                            </Text>
+                            <Text style={styles.aiAnalysisMetric}>
+                              Probability:{" "}
+                              {Math.round(result.probability_correct * 100)}%
+                            </Text>
+                          </View>
                         </View>
-                      </View>
-                    ))}
-                  </View>
-                )}
+                      ))}
+                    </View>
+                  )}
 
-                <TouchableOpacity
-                  style={styles.restartButton}
-                  onPress={handleRestart}
-                >
-                  <Text style={styles.restartButtonText}>Play Again</Text>
-                </TouchableOpacity>
-              </>
-            )}
-          </View>
-        </ScrollView>
+                  <TouchableOpacity
+                    style={styles.restartButton}
+                    onPress={handleRestart}
+                  >
+                    <Text style={styles.restartButtonText}>Play Again</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
+          </ScrollView>
+        </SafeAreaView>
       </AuthGuard>
     );
   }
 
   return (
     <AuthGuard>
-      <ScrollView style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.progressText}>
-            Question {currentWordIndex + 1} of {WORDS.length}
-          </Text>
-          <Text style={styles.scoreText}>Score: {score}</Text>
-        </View>
-
-        <View style={styles.wordContainer}>
-          <Text style={styles.wordLabel}>Which pronunciation is correct?</Text>
-          <Text style={styles.wordDisplay}>{currentWord.display}</Text>
-        </View>
-
-        <View style={styles.optionsContainer}>
-          <Text style={styles.instructionText}>
-            Listen to both pronunciations and choose the correct one:
-          </Text>
-          {shuffledOptions.map((option) => (
-            <AudioOptionButton
-              key={option.id}
-              option={option}
-              isSelected={selectedOption === option.id}
-              onSelect={() => handleSelectOption(option.id)}
-            />
-          ))}
-        </View>
-
-        <TouchableOpacity
-          style={[
-            styles.submitButton,
-            (!selectedOption || isAnalyzing) && styles.submitButtonDisabled,
-          ]}
-          onPress={handleSubmit}
-          disabled={!selectedOption || isAnalyzing}
-        >
-          {isAnalyzing ? (
-            <View style={styles.analyzingContainer}>
-              <ActivityIndicator size="small" color="#fff" />
-              <Text style={styles.submitButtonText}>Analyzing...</Text>
-            </View>
-          ) : (
-            <Text style={styles.submitButtonText}>
-              {currentWordIndex < WORDS.length - 1
-                ? "Submit & Next"
-                : "Submit & Finish"}
+      <SafeAreaView style={styles.safeArea} edges={["top", "right", "left"]}>
+        <ScrollView style={styles.container}>
+          <View style={styles.header}>
+            <Text style={styles.progressText}>
+              Question {currentWordIndex + 1} of {WORDS.length}
             </Text>
-          )}
-        </TouchableOpacity>
-      </ScrollView>
+            <Text style={styles.scoreText}>Score: {score}</Text>
+          </View>
+
+          <View style={styles.wordContainer}>
+            <Text style={styles.wordLabel}>
+              Which pronunciation is correct?
+            </Text>
+            <Text style={styles.wordDisplay}>{currentWord.display}</Text>
+          </View>
+
+          <View style={styles.optionsContainer}>
+            <Text style={styles.instructionText}>
+              Listen to both pronunciations and choose the correct one:
+            </Text>
+            {shuffledOptions.map((option) => (
+              <AudioOptionButton
+                key={option.id}
+                option={option}
+                isSelected={selectedOption === option.id}
+                onSelect={() => handleSelectOption(option.id)}
+              />
+            ))}
+          </View>
+
+          <TouchableOpacity
+            style={[
+              styles.submitButton,
+              (!selectedOption || isAnalyzing) && styles.submitButtonDisabled,
+            ]}
+            onPress={handleSubmit}
+            disabled={!selectedOption || isAnalyzing}
+          >
+            {isAnalyzing ? (
+              <View style={styles.analyzingContainer}>
+                <ActivityIndicator size="small" color="#fff" />
+                <Text style={styles.submitButtonText}>Analyzing...</Text>
+              </View>
+            ) : (
+              <Text style={styles.submitButtonText}>
+                {currentWordIndex < WORDS.length - 1
+                  ? "Submit & Next"
+                  : "Submit & Finish"}
+              </Text>
+            )}
+          </TouchableOpacity>
+        </ScrollView>
+      </SafeAreaView>
     </AuthGuard>
   );
 };
@@ -491,6 +501,10 @@ const AudioOptionButton = ({
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#F0F4F8",
+  },
   container: {
     flex: 1,
     backgroundColor: "#F0F4F8",

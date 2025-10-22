@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import AuthGuard from "../components/AuthGuard";
 import { db } from "../config/firebase";
 import { useAuth } from "../contexts/AuthContext";
@@ -180,187 +181,195 @@ const PronunciationPractice = () => {
 
     return (
       <AuthGuard>
-        <ScrollView style={styles.container}>
-          <View style={styles.resultContainer}>
-            <Text style={styles.resultTitle}>🎉 Practice Complete! 🎉</Text>
+        <SafeAreaView style={styles.safeArea} edges={["top", "right", "left"]}>
+          <ScrollView style={styles.container}>
+            <View style={styles.resultContainer}>
+              <Text style={styles.resultTitle}>🎉 Practice Complete! 🎉</Text>
 
-            {isSaving && (
-              <View style={styles.savingContainer}>
-                <ActivityIndicator size="small" color="#3B82F6" />
-                <Text style={styles.savingText}>Saving your score...</Text>
+              {isSaving && (
+                <View style={styles.savingContainer}>
+                  <ActivityIndicator size="small" color="#3B82F6" />
+                  <Text style={styles.savingText}>Saving your score...</Text>
+                </View>
+              )}
+
+              <View style={styles.summaryCard}>
+                <Text style={styles.summaryScore}>
+                  {score} / {totalWords}
+                </Text>
+                <Text style={styles.summaryText}>Correct Words</Text>
+                <Text style={styles.summaryPercentage}>
+                  {percentage}% Accuracy
+                </Text>
               </View>
-            )}
 
-            <View style={styles.summaryCard}>
-              <Text style={styles.summaryScore}>
-                {score} / {totalWords}
-              </Text>
-              <Text style={styles.summaryText}>Correct Words</Text>
-              <Text style={styles.summaryPercentage}>
-                {percentage}% Accuracy
-              </Text>
-            </View>
-
-            <View style={styles.resultsSection}>
-              <Text style={styles.resultsSectionTitle}>Your Results</Text>
-              {userAnswers.map((answer, index) => (
-                <View key={index} style={styles.resultItem}>
-                  <View style={styles.resultHeader}>
-                    <Text style={styles.resultWord}>
-                      {index + 1}. {PRACTICE_WORDS[index].display}
-                    </Text>
-                    <View
-                      style={[
-                        styles.resultBadge,
-                        answer.isCorrect
-                          ? styles.resultBadgeCorrect
-                          : styles.resultBadgeIncorrect,
-                      ]}
-                    >
-                      <Text style={styles.resultBadgeText}>
-                        {answer.isCorrect ? "✓ Correct" : "✗ Incorrect"}
+              <View style={styles.resultsSection}>
+                <Text style={styles.resultsSectionTitle}>Your Results</Text>
+                {userAnswers.map((answer, index) => (
+                  <View key={index} style={styles.resultItem}>
+                    <View style={styles.resultHeader}>
+                      <Text style={styles.resultWord}>
+                        {index + 1}. {PRACTICE_WORDS[index].display}
                       </Text>
+                      <View
+                        style={[
+                          styles.resultBadge,
+                          answer.isCorrect
+                            ? styles.resultBadgeCorrect
+                            : styles.resultBadgeIncorrect,
+                        ]}
+                      >
+                        <Text style={styles.resultBadgeText}>
+                          {answer.isCorrect ? "✓ Correct" : "✗ Incorrect"}
+                        </Text>
+                      </View>
+                    </View>
+                    <View style={styles.resultDetails}>
+                      <Text style={styles.resultMetric}>
+                        You typed: {answer.userTyped}
+                      </Text>
+                      {!answer.isCorrect && (
+                        <Text style={styles.resultMetricCorrect}>
+                          Correct: {answer.word}
+                        </Text>
+                      )}
                     </View>
                   </View>
-                  <View style={styles.resultDetails}>
-                    <Text style={styles.resultMetric}>
-                      You typed: {answer.userTyped}
-                    </Text>
-                    {!answer.isCorrect && (
-                      <Text style={styles.resultMetricCorrect}>
-                        Correct: {answer.word}
-                      </Text>
-                    )}
-                  </View>
-                </View>
-              ))}
-            </View>
+                ))}
+              </View>
 
-            <TouchableOpacity
-              style={styles.restartButton}
-              onPress={handleRestart}
-            >
-              <Text style={styles.restartButtonText}>Practice Again</Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
+              <TouchableOpacity
+                style={styles.restartButton}
+                onPress={handleRestart}
+              >
+                <Text style={styles.restartButtonText}>Practice Again</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </SafeAreaView>
       </AuthGuard>
     );
   }
 
   return (
     <AuthGuard>
-      <ScrollView style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.progressText}>
-            Word {currentWordIndex + 1} of {PRACTICE_WORDS.length}
-          </Text>
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>
-              {currentWord.difficulty.toUpperCase()}
+      <SafeAreaView style={styles.safeArea} edges={["top", "right", "left"]}>
+        <ScrollView style={styles.container}>
+          <View style={styles.header}>
+            <Text style={styles.progressText}>
+              Word {currentWordIndex + 1} of {PRACTICE_WORDS.length}
             </Text>
-          </View>
-        </View>
-
-        <View style={styles.wordCard}>
-          <Text style={styles.instruction}>
-            Listen and type the word you hear:
-          </Text>
-          <TouchableOpacity
-            style={styles.audioIconButton}
-            onPress={playReference}
-          >
-            <Text style={styles.audioIcon}>
-              {referencePlayer.playing ? "🔊" : "🔈"}
-            </Text>
-            <Text style={styles.audioText}>
-              {referencePlayer.playing ? "Playing..." : "Tap to Listen"}
-            </Text>
-          </TouchableOpacity>
-
-          <View style={styles.phoneticContainer}>
-            <Text style={styles.phoneticText}>{currentWord.phonetic}</Text>
-          </View>
-        </View>
-
-        <View style={styles.inputSection}>
-          <Text style={styles.sectionTitle}>✍️ Type the word:</Text>
-          <TextInput
-            style={styles.textInput}
-            value={userInput}
-            onChangeText={setUserInput}
-            placeholder="Type here..."
-            placeholderTextColor="#9CA3AF"
-            autoCapitalize="none"
-            autoCorrect={false}
-            editable={!showFeedback}
-          />
-
-          {showHint && (
-            <View style={styles.hintContainer}>
-              <Text style={styles.hintText}>💡 Hint: {currentWord.hint}</Text>
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>
+                {currentWord.difficulty.toUpperCase()}
+              </Text>
             </View>
-          )}
+          </View>
 
-          {!showFeedback && (
+          <View style={styles.wordCard}>
+            <Text style={styles.instruction}>
+              Listen and type the word you hear:
+            </Text>
             <TouchableOpacity
-              style={styles.hintButton}
-              onPress={() => setShowHint(!showHint)}
+              style={styles.audioIconButton}
+              onPress={playReference}
             >
-              <Text style={styles.hintButtonText}>
-                {showHint ? "Hide Hint" : "Show Hint"}
+              <Text style={styles.audioIcon}>
+                {referencePlayer.playing ? "🔊" : "🔈"}
               </Text>
+              <Text style={styles.audioText}>
+                {referencePlayer.playing ? "Playing..." : "Tap to Listen"}
+              </Text>
+            </TouchableOpacity>
+
+            <View style={styles.phoneticContainer}>
+              <Text style={styles.phoneticText}>{currentWord.phonetic}</Text>
+            </View>
+          </View>
+
+          <View style={styles.inputSection}>
+            <Text style={styles.sectionTitle}>✍️ Type the word:</Text>
+            <TextInput
+              style={styles.textInput}
+              value={userInput}
+              onChangeText={setUserInput}
+              placeholder="Type here..."
+              placeholderTextColor="#9CA3AF"
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!showFeedback}
+            />
+
+            {showHint && (
+              <View style={styles.hintContainer}>
+                <Text style={styles.hintText}>💡 Hint: {currentWord.hint}</Text>
+              </View>
+            )}
+
+            {!showFeedback && (
+              <TouchableOpacity
+                style={styles.hintButton}
+                onPress={() => setShowHint(!showHint)}
+              >
+                <Text style={styles.hintButtonText}>
+                  {showHint ? "Hide Hint" : "Show Hint"}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {showFeedback ? (
+            <View style={styles.feedbackSection}>
+              <View
+                style={[
+                  styles.feedbackCard,
+                  isCorrect ? styles.feedbackCorrect : styles.feedbackIncorrect,
+                ]}
+              >
+                <Text style={styles.feedbackEmoji}>
+                  {isCorrect ? "🎉" : "😅"}
+                </Text>
+                <Text style={styles.feedbackTitle}>
+                  {isCorrect ? "Perfect!" : "Not quite!"}
+                </Text>
+                <Text style={styles.feedbackText}>
+                  {isCorrect
+                    ? "You got it right!"
+                    : `The correct word is: ${currentWord.display}`}
+                </Text>
+              </View>
+
+              <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
+                <Text style={styles.nextButtonText}>
+                  {currentWordIndex < PRACTICE_WORDS.length - 1
+                    ? "Next Word →"
+                    : "See Results"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={[
+                styles.submitButton,
+                userInput.trim() === "" && styles.submitButtonDisabled,
+              ]}
+              onPress={handleSubmit}
+              disabled={userInput.trim() === ""}
+            >
+              <Text style={styles.submitButtonText}>Check Answer</Text>
             </TouchableOpacity>
           )}
-        </View>
-
-        {showFeedback ? (
-          <View style={styles.feedbackSection}>
-            <View
-              style={[
-                styles.feedbackCard,
-                isCorrect ? styles.feedbackCorrect : styles.feedbackIncorrect,
-              ]}
-            >
-              <Text style={styles.feedbackEmoji}>
-                {isCorrect ? "🎉" : "😅"}
-              </Text>
-              <Text style={styles.feedbackTitle}>
-                {isCorrect ? "Perfect!" : "Not quite!"}
-              </Text>
-              <Text style={styles.feedbackText}>
-                {isCorrect
-                  ? "You got it right!"
-                  : `The correct word is: ${currentWord.display}`}
-              </Text>
-            </View>
-
-            <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-              <Text style={styles.nextButtonText}>
-                {currentWordIndex < PRACTICE_WORDS.length - 1
-                  ? "Next Word →"
-                  : "See Results"}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <TouchableOpacity
-            style={[
-              styles.submitButton,
-              userInput.trim() === "" && styles.submitButtonDisabled,
-            ]}
-            onPress={handleSubmit}
-            disabled={userInput.trim() === ""}
-          >
-            <Text style={styles.submitButtonText}>Check Answer</Text>
-          </TouchableOpacity>
-        )}
-      </ScrollView>
+        </ScrollView>
+      </SafeAreaView>
     </AuthGuard>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#F0F9FF",
+  },
   container: {
     flex: 1,
     backgroundColor: "#F0F9FF",

@@ -3,13 +3,13 @@ import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import AuthGuard from "../components/AuthGuard";
 import { db } from "../config/firebase";
 import { useAuth } from "../contexts/AuthContext";
