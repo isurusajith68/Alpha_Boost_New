@@ -32,20 +32,6 @@ export default function HomeScreen() {
       shadowColor: "#FF6B9D",
     },
     {
-      emoji: "👤",
-      text: "Profile",
-      route: "/profile" as const,
-      colors: ["#4ECDC4", "#7DDDD9"],
-      shadowColor: "#4ECDC4",
-    },
-    {
-      emoji: "📊",
-      text: "Progress",
-      route: "/feedback" as const,
-      colors: ["#FFE66D", "#FFED8A"],
-      shadowColor: "#FFE66D",
-    },
-    {
       emoji: "🎮",
       text: "Play Game",
       route: "/game" as const,
@@ -58,6 +44,20 @@ export default function HomeScreen() {
       route: "/pronunciation-practice" as const,
       colors: ["#FF6B6B", "#FF8E8E"],
       shadowColor: "#FF6B6B",
+    },
+    {
+      emoji: "👤",
+      text: "Profile",
+      route: "/profile" as const,
+      colors: ["#4ECDC4", "#7DDDD9"],
+      shadowColor: "#4ECDC4",
+    },
+    {
+      emoji: "📊",
+      text: "Progress",
+      route: "/feedback" as const,
+      colors: ["#FFE66D", "#FFED8A"],
+      shadowColor: "#FFE66D",
     },
   ];
   async function testServerConnection() {

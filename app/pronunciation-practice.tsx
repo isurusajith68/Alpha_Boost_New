@@ -1,6 +1,9 @@
 import { useAudioPlayer } from "expo-audio";
+import { addDoc, collection } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -9,6 +12,8 @@ import {
   View,
 } from "react-native";
 import AuthGuard from "../components/AuthGuard";
+import { db } from "../config/firebase";
+import { useAuth } from "../contexts/AuthContext";
 
 const PRACTICE_WORDS = [
   {
@@ -65,6 +70,7 @@ type UserAnswer = {
 };
 
 const PronunciationPractice = () => {
+  const { user } = useAuth();
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [practiceFinished, setPracticeFinished] = useState(false);
   const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([]);
@@ -72,6 +78,7 @@ const PronunciationPractice = () => {
   const [showHint, setShowHint] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const currentWord = PRACTICE_WORDS[currentWordIndex];
   const referencePlayer = useAudioPlayer(currentWord.referenceAudio);
@@ -110,11 +117,46 @@ const PronunciationPractice = () => {
     setUserAnswers(updatedAnswers);
   };
 
-  const handleNext = () => {
+  const savePracticeScore = async () => {
+    if (!user) {
+      Alert.alert("Error", "You must be logged in to save your score");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const score = calculateScore();
+      const totalWords = PRACTICE_WORDS.length;
+      const percentage = Math.round((score / totalWords) * 100);
+
+      await addDoc(collection(db, "pronunciationScores"), {
+        userId: user.uid,
+        score: score,
+        totalWords: totalWords,
+        percentage: percentage,
+        answers: userAnswers,
+        gameType: "pronunciation-practice",
+        timestamp: new Date(),
+      });
+
+      console.log("Score saved successfully!");
+    } catch (error) {
+      console.error("Error saving score:", error);
+      Alert.alert(
+        "Save Failed",
+        "Could not save your score. Please try again."
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleNext = async () => {
     if (currentWordIndex < PRACTICE_WORDS.length - 1) {
       setCurrentWordIndex(currentWordIndex + 1);
     } else {
       setPracticeFinished(true);
+      await savePracticeScore();
     }
   };
 
@@ -141,6 +183,13 @@ const PronunciationPractice = () => {
         <ScrollView style={styles.container}>
           <View style={styles.resultContainer}>
             <Text style={styles.resultTitle}>🎉 Practice Complete! 🎉</Text>
+
+            {isSaving && (
+              <View style={styles.savingContainer}>
+                <ActivityIndicator size="small" color="#3B82F6" />
+                <Text style={styles.savingText}>Saving your score...</Text>
+              </View>
+            )}
 
             <View style={styles.summaryCard}>
               <Text style={styles.summaryScore}>
@@ -617,6 +666,21 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 20,
     fontWeight: "800",
+  },
+  savingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#EFF6FF",
+    padding: 15,
+    borderRadius: 12,
+    marginBottom: 20,
+    gap: 10,
+  },
+  savingText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#3B82F6",
   },
 });
 

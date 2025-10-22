@@ -1,6 +1,8 @@
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
+import React, { useCallback, useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -9,36 +11,96 @@ import {
   View,
 } from "react-native";
 import AuthGuard from "../components/AuthGuard";
-import { getHistory, HistoryEntry } from "../utils/storage";
+import { db } from "../config/firebase";
+import { useAuth } from "../contexts/AuthContext";
+
+interface PronunciationScore {
+  id: string;
+  userId: string;
+  score: number;
+  totalWords: number;
+  percentage: number;
+  gameType: string;
+  timestamp: Date;
+  answers: {
+    word: string;
+    userTyped: string;
+    isCorrect: boolean;
+  }[];
+}
 
 export default function Feedback() {
   const router = useRouter();
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [totalWords, setTotalWords] = useState(0);
-  const [correctWords, setCorrectWords] = useState(0);
-  const [practiceCount, setPracticeCount] = useState(0);
+  const { user } = useAuth();
+  const [pronunciationScores, setPronunciationScores] = useState<
+    PronunciationScore[]
+  >([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadPronunciationScores = useCallback(async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const scoresQuery = query(
+        collection(db, "pronunciationScores"),
+        where("userId", "==", user.uid),
+        orderBy("timestamp", "desc")
+      );
+
+      const querySnapshot = await getDocs(scoresQuery);
+      const scores: PronunciationScore[] = [];
+
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        scores.push({
+          id: doc.id,
+          userId: data.userId,
+          score: data.score,
+          totalWords: data.totalWords,
+          percentage: data.percentage,
+          gameType: data.gameType,
+          timestamp: data.timestamp.toDate(),
+          answers: data.answers || [],
+        });
+      });
+
+      setPronunciationScores(scores);
+    } catch (error) {
+      console.error("Failed to load pronunciation scores:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
 
   useEffect(() => {
-    loadHistory();
-  }, []);
+    loadPronunciationScores();
+  }, [loadPronunciationScores]);
 
-  async function loadHistory() {
-    try {
-      const entries = await getHistory();
-      setHistory(entries);
-      setTotalWords(entries.length);
+  // Calculate statistics from pronunciation scores
+  const calculateStats = () => {
+    let totalWordsAttempted = 0;
+    let totalCorrectWords = 0;
+    let totalGamesPlayed = pronunciationScores.length;
 
-      const correct = entries.filter(
-        (entry) => entry.score && entry.score > 0
-      ).length;
-      setCorrectWords(correct);
+    pronunciationScores.forEach((score) => {
+      totalWordsAttempted += score.totalWords;
+      totalCorrectWords += score.score;
+    });
 
-      const practice = entries.filter((entry) => entry.audioUri).length;
-      setPracticeCount(practice);
-    } catch (error) {
-      console.error("Failed to load history:", error);
-    }
-  }
+    return {
+      totalWords: totalWordsAttempted,
+      correctWords: totalCorrectWords,
+      gamesPlayed: totalGamesPlayed,
+    };
+  };
+
+  const stats = calculateStats();
+  const totalWords = stats.totalWords;
+  const correctWords = stats.correctWords;
+  const practiceCount = stats.gamesPlayed;
 
   const successRate =
     totalWords > 0 ? Math.round((correctWords / totalWords) * 100) : 0;
@@ -64,6 +126,19 @@ export default function Feedback() {
     return stars;
   };
 
+  if (loading) {
+    return (
+      <AuthGuard>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#3B82F6" />
+            <Text style={styles.loadingText}>Loading your progress...</Text>
+          </View>
+        </SafeAreaView>
+      </AuthGuard>
+    );
+  }
+
   return (
     <AuthGuard>
       <SafeAreaView style={styles.safeArea}>
@@ -78,20 +153,20 @@ export default function Feedback() {
           <View style={styles.statsContainer}>
             <View style={styles.statCard}>
               <Text style={styles.statNumber}>{totalWords}</Text>
-              <Text style={styles.statLabel}>Words Tried</Text>
+              <Text style={styles.statLabel}>Total Words</Text>
               <Text style={styles.statEmoji}>📝</Text>
             </View>
 
             <View style={styles.statCard}>
               <Text style={styles.statNumber}>{correctWords}</Text>
-              <Text style={styles.statLabel}>Correct Answers</Text>
+              <Text style={styles.statLabel}>Words Correct</Text>
               <Text style={styles.statEmoji}>✅</Text>
             </View>
 
             <View style={styles.statCard}>
               <Text style={styles.statNumber}>{practiceCount}</Text>
-              <Text style={styles.statLabel}>Voice Practice</Text>
-              <Text style={styles.statEmoji}>🎤</Text>
+              <Text style={styles.statLabel}>Games Played</Text>
+              <Text style={styles.statEmoji}>�</Text>
             </View>
           </View>
 
@@ -104,32 +179,58 @@ export default function Feedback() {
             </Text>
           </View>
 
-          {totalWords === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyEmoji}>🚀</Text>
-              <Text style={styles.emptyTitle}>
-                Start Your Learning Journey!
+          {pronunciationScores.length > 0 && (
+            <View style={styles.pronunciationScoresSection}>
+              <Text style={styles.pronunciationTitle}>
+                🎤 Pronunciation Games History
               </Text>
-              <Text style={styles.emptyText}>
-                Practice some words and play games to see your progress here!
-              </Text>
-            </View>
-          ) : (
-            <View style={styles.recentActivity}>
-              <Text style={styles.recentTitle}>Recent Activity</Text>
-              {history.slice(0, 5).map((entry, index) => (
-                <View key={entry.id} style={styles.activityItem}>
-                  <Text style={styles.activityWord}>{entry.word}</Text>
-                  <Text style={styles.activityScore}>
-                    {entry.score && entry.score > 0
-                      ? "✅"
-                      : entry.audioUri
-                      ? "🎤"
-                      : "❌"}
+              {pronunciationScores.slice(0, 10).map((score) => (
+                <View key={score.id} style={styles.scoreCard}>
+                  <View style={styles.scoreHeader}>
+                    <View style={styles.scoreHeaderLeft}>
+                      <Text style={styles.scoreDate}>
+                        {score.timestamp.toLocaleDateString()}
+                      </Text>
+                      <View
+                        style={[
+                          styles.gameTypeBadge,
+                          score.gameType === "pronunciation-practice"
+                            ? styles.gameTypePractice
+                            : styles.gameTypeGame,
+                        ]}
+                      >
+                        <Text style={styles.gameTypeText}>
+                          {score.gameType === "pronunciation-practice"
+                            ? "✍️ Typing"
+                            : "🎮 Game"}
+                        </Text>
+                      </View>
+                    </View>
+                    <View
+                      style={[
+                        styles.percentageBadge,
+                        score.percentage >= 80
+                          ? styles.percentageHigh
+                          : score.percentage >= 60
+                          ? styles.percentageMedium
+                          : styles.percentageLow,
+                      ]}
+                    >
+                      <Text style={styles.percentageText}>
+                        {score.percentage}%
+                      </Text>
+                    </View>
+                  </View>
+                  <Text style={styles.scoreDetails}>
+                    Score: {score.score} / {score.totalWords} words correct
                   </Text>
-                  <Text style={styles.activityTime}>
-                    {new Date(entry.timestamp).toLocaleDateString()}
-                  </Text>
+                  <View style={styles.scoreAnswers}>
+                    {score.answers.map((answer, idx) => (
+                      <Text key={idx} style={styles.answerEmoji}>
+                        {answer.isCorrect ? "✅" : "❌"}
+                      </Text>
+                    ))}
+                  </View>
                 </View>
               ))}
             </View>
@@ -141,6 +242,13 @@ export default function Feedback() {
               onPress={() => router.push("/home")}
             >
               <Text style={styles.buttonText}>Practice More Words! 📚</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={() => router.push("/pronunciation-practice")}
+            >
+              <Text style={styles.buttonText}>Pronunciation Practice! 🎤</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -361,5 +469,107 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     fontSize: 18,
     textAlign: "center",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  loadingText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#6B7280",
+    marginTop: 15,
+  },
+  pronunciationScoresSection: {
+    width: "100%",
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 25,
+    borderWidth: 2,
+    borderColor: "#3B82F6",
+  },
+  pronunciationTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#1E40AF",
+    marginBottom: 15,
+    textAlign: "center",
+  },
+  scoreCard: {
+    backgroundColor: "#F0F9FF",
+    borderRadius: 15,
+    padding: 15,
+    marginBottom: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: "#3B82F6",
+  },
+  scoreHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  scoreHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    flex: 1,
+  },
+  scoreDate: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#374151",
+  },
+  gameTypeBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  gameTypePractice: {
+    backgroundColor: "#DBEAFE",
+  },
+  gameTypeGame: {
+    backgroundColor: "#FCE7F3",
+  },
+  gameTypeText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#1F2937",
+  },
+  percentageBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  percentageHigh: {
+    backgroundColor: "#D1FAE5",
+  },
+  percentageMedium: {
+    backgroundColor: "#FEF3C7",
+  },
+  percentageLow: {
+    backgroundColor: "#FEE2E2",
+  },
+  percentageText: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#1F2937",
+  },
+  scoreDetails: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#6B7280",
+    marginBottom: 10,
+  },
+  scoreAnswers: {
+    flexDirection: "row",
+    gap: 8,
+    flexWrap: "wrap",
+  },
+  answerEmoji: {
+    fontSize: 18,
   },
 });

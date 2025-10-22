@@ -1,5 +1,6 @@
 import { Asset } from "expo-asset";
 import { useAudioPlayer } from "expo-audio";
+import { addDoc, collection } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -11,6 +12,8 @@ import {
   View,
 } from "react-native";
 import AuthGuard from "../components/AuthGuard";
+import { db } from "../config/firebase";
+import { useAuth } from "../contexts/AuthContext";
 
 const WORDS = [
   {
@@ -80,6 +83,7 @@ type UserAnswer = {
 };
 
 const Game = () => {
+  const { user } = useAuth();
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [gameFinished, setGameFinished] = useState(false);
@@ -87,6 +91,7 @@ const Game = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([]);
   const [apiResults, setApiResults] = useState<PredictionResult[]>([]);
+  const [isSavingScore, setIsSavingScore] = useState(false);
 
   const currentWord = WORDS[currentWordIndex];
 
@@ -152,9 +157,45 @@ const Game = () => {
     }
   };
 
+  const saveGameScore = async () => {
+    if (!user) {
+      console.log("No user logged in, skipping score save");
+      return;
+    }
+
+    setIsSavingScore(true);
+    try {
+      const totalWords = WORDS.length;
+      const percentage = Math.round((score / totalWords) * 100);
+
+      await addDoc(collection(db, "pronunciationScores"), {
+        userId: user.uid,
+        score: score,
+        totalWords: totalWords,
+        percentage: percentage,
+        answers: userAnswers.map((answer) => ({
+          word: answer.word,
+          selectedAudio: answer.audioFileName,
+          isCorrect: answer.isCorrect,
+        })),
+        gameType: "pronunciation-game",
+        timestamp: new Date(),
+      });
+
+      console.log("Game score saved successfully!");
+    } catch (error) {
+      console.error("Error saving game score:", error);
+    } finally {
+      setIsSavingScore(false);
+    }
+  };
+
   const sendAllAnswersToAPI = async (answersToSend: UserAnswer[]) => {
     setIsAnalyzing(true);
     setGameFinished(true);
+
+    // Save score to Firebase
+    await saveGameScore();
 
     try {
       const testResponse = await fetch(
@@ -289,6 +330,14 @@ const Game = () => {
             ) : (
               <>
                 <Text style={styles.resultTitle}>🎉 Game Complete! 🎉</Text>
+
+                {isSavingScore && (
+                  <View style={styles.savingContainer}>
+                    <ActivityIndicator size="small" color="#4ECDC4" />
+                    <Text style={styles.savingText}>Saving your score...</Text>
+                  </View>
+                )}
+
                 <Text style={styles.resultScore}>
                   Your Score: {score} / {WORDS.length}
                 </Text>
@@ -766,6 +815,21 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#6B7280",
     marginBottom: 4,
+  },
+  savingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#E0F2FE",
+    padding: 15,
+    borderRadius: 12,
+    marginBottom: 20,
+    gap: 10,
+  },
+  savingText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#0284C7",
   },
 });
 
